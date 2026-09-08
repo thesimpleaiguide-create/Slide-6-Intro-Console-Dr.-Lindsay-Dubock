@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide 6: Dr. Lindsay Dubock • The Behavioural Iceberg Briefing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: '#0C2340',
+                        trust: '#005EB8',
+                        orange: '#FE5000',
+                        slate: '#333F48',
+                        ice: '#DBE2E9',
+                        cream: '#FBFBFB'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::-webkit-scrollbar { display: none; }
+        * { scrollbar-width: none; }
+
+        /* Dynamic word token styling for real-time speech tracking */
+        .word-token {
+            display: inline-block;
+            margin: 0 3px 4px 0;
+            padding: 1px 4px;
+            border-radius: 6px;
+            transition: all 0.16s ease-out;
+        }
+        .word-active {
+            background-color: #FE5000;
+            color: #ffffff !important;
+            font-weight: 700;
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(254, 80, 0, 0.35);
+        }
+        .word-spoken {
+            color: #0C2340;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+        .word-upcoming {
+            color: #94A3B8;
+            opacity: 0.65;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body class="bg-transparent text-slate font-sans p-2 sm:p-4 flex flex-col items-center justify-start w-full">
+
+    <div class="w-full max-w-4xl mx-auto bg-white border border-ice rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row items-stretch">
+        
+        <!-- Left Column: Dr. Lindsay Portrait -->
+        <div class="w-full md:w-64 lg:w-72 bg-navy relative shrink-0 min-h-[260px] md:min-h-full flex items-center justify-center overflow-hidden">
+            <img src="./facing_camera.jpeg" 
+                 onerror="this.onerror=null; this.src='./facing_camera_202609070747.jpeg';"
+                 alt="Dr. Lindsay Dubock" 
+                 class="w-full h-full object-cover object-[24%_12%]">
+            
+            <div class="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/20 to-transparent pointer-events-none"></div>
+
+            <!-- Portrait Bottom Identity Badge -->
+            <div class="absolute bottom-3.5 left-4 right-4 text-white pointer-events-none">
+                <div class="text-sm font-bold tracking-tight">Dr. Lindsay Dubock</div>
+                <div class="text-[11px] text-ice/85">Director, The Training Network</div>
+            </div>
+
+            <!-- Live Broadcast Audio Indicator Pill -->
+            <div class="absolute top-3.5 left-3.5 bg-navy/85 backdrop-blur-xs text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/20 flex items-center space-x-1.5 shadow-sm">
+                <span id="speakerPulse" class="w-2 h-2 rounded-full bg-orange animate-pulse"></span>
+                <span id="speakerStatus">Ready</span>
+            </div>
+        </div>
+
+        <!-- Right Column: Interactive Word-by-Word Speech Console -->
+        <div class="flex-1 p-5 sm:p-6 md:p-7 flex flex-col justify-between space-y-4">
+            
+            <!-- Header Metadata -->
+            <div>
+                <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-ice/70">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-orange"></span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-trust">
+                            Phase 3 · Abstract Conceptualisation
+                        </span>
+                    </div>
+                    <div id="delayNotice" class="text-[11px] font-mono text-orange font-semibold bg-orange/10 px-2 py-0.5 rounded-md">
+                        Starting in 2s...
+                    </div>
+                </div>
+
+                <h2 class="text-base sm:text-lg font-bold text-navy mt-2.5">
+                    The Behavioural Iceberg: Clinical Briefing
+                </h2>
+            </div>
+
+            <!-- Spoken Words Telemetry Box (Synced Word-by-Word) -->
+            <div id="transcriptViewport" class="p-4 bg-slate-50 border border-ice/80 rounded-xl overflow-y-auto max-h-[175px] sm:max-h-[200px] leading-relaxed text-sm sm:text-base scroll-smooth">
+                <div id="speechBox" class="leading-relaxed">
+                    <!-- Word tokens inserted via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Playback Control Bar -->
+            <div class="pt-2 border-t border-ice flex items-center space-x-3.5">
+                <!-- Play/Pause Button -->
+                <button id="btnPlayPause" onclick="toggleAudio()" 
+                        class="w-11 h-11 rounded-full bg-navy hover:bg-trust text-white flex items-center justify-center transition-transform active:scale-95 shadow-md cursor-pointer shrink-0">
+                    <svg id="playPauseIcon" class="w-5 h-5 ml-0.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+
+                <!-- Scrubber Progress Bar & Timers -->
+                <div class="flex-1 flex flex-col justify-center">
+                    <div class="w-full bg-ice/90 rounded-full h-2.5 overflow-hidden cursor-pointer" onclick="seekAudio(event)">
+                        <div id="progressBar" class="bg-orange h-full w-0 transition-all duration-75"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] font-mono text-slate/70 mt-1.5">
+                        <span id="currentTimeLabel">00:00</span>
+                        <span id="autoPlayStatus" class="font-sans text-[10px] text-slate/50 hidden sm:inline">2s Auto-start</span>
+                        <span id="totalDurationLabel">00:32</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Timed sentence script matching Dr. Lindsay's Iceberg intro
+        const timedPhrases = [
+            { start: 0.0, end: 5.5, text: "In medicine, if a patient presents with a spiked temperature, you don't take it as a personal insult." },
+            { start: 5.6, end: 11.2, text: "You recognize it as clinical data — an immune response to an underlying infection." },
+            { start: 11.3, end: 14.2, text: "Challenging patient behaviour is no different." },
+            { start: 14.3, end: 20.8, text: "The anger, the sharp dismissal, the sudden defensiveness on the phone — that is simply the ten percent sitting above the waterline." },
+            { start: 20.9, end: 25.8, text: "Your clinical leverage isn't in fighting the tip of the iceberg." },
+            { start: 25.9, end: 31.5, text: "It's in knowing what's driving it underneath." }
+        ];
+
+        // Break phrases into word tokens
+        const allWords = [];
+        let globalWordIdx = 0;
+
+        timedPhrases.forEach((phrase) => {
+            const words = phrase.text.split(' ');
+            const totalChars = words.reduce((acc, w) => acc + Math.max(1, w.length), 0);
+            const phraseDuration = phrase.end - phrase.start;
+            let currentOffset = phrase.start;
+
+            words.forEach((w) => {
+                const wordWeight = Math.max(1, w.length) / totalChars;
+                const wordDuration = phraseDuration * wordWeight;
+                allWords.push({
+                    id: globalWordIdx,
+                    word: w,
+                    start: currentOffset,
+                    end: currentOffset + wordDuration
+                });
+                currentOffset += wordDuration;
+                globalWordIdx++;
+            });
+        });
+
+        // Render word tokens into the speech container
+        const speechBox = document.getElementById('speechBox');
+        allWords.forEach((item) => {
+            const span = document.createElement('span');
+            span.id = `w-${item.id}`;
+            span.className = "word-token word-upcoming";
+            span.innerText = item.word;
+            speechBox.appendChild(span);
+        });
+
+        const audio = new Audio('./HD_S06_Lindsay_IcebergIntro.wav');
+        let isPlaying = false;
+        let ticker = null;
+        let totalDuration = 31.5;
+
+        audio.addEventListener('loadedmetadata', () => {
+            if (audio.duration && !isNaN(audio.duration)) {
+                totalDuration = audio.duration;
+                updateTotalDurationDisplay();
+            }
+        });
+
+        function updateTotalDurationDisplay() {
+            const m = String(Math.floor(totalDuration / 60)).padStart(2, '0');
+            const s = String(Math.floor(totalDuration % 60)).padStart(2, '0');
+            document.getElementById('totalDurationLabel').innerText = `${m}:${s}`;
+        }
+
+        audio.addEventListener('ended', () => {
+            pauseAudio();
+            resetTranscript();
+            document.getElementById('speakerStatus').innerText = "Completed";
+            document.getElementById('speakerPulse').classList.remove('animate-ping');
+        });
+
+        function playAudio() {
+            isPlaying = true;
+            document.getElementById('delayNotice').classList.add('hidden');
+            document.getElementById('playPauseIcon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+            document.getElementById('speakerStatus').innerText = "Speaking";
+            document.getElementById('speakerPulse').classList.add('animate-ping');
+
+            audio.play().catch(err => {
+                console.warn("Autoplay was prevented by the browser, falling back to speech synthesis or manual gesture:", err);
+                fallbackSpeechSynthesis();
+            });
+
+            clearInterval(ticker);
+            ticker = setInterval(updateLiveProgress, 40);
+        }
+
+        function pauseAudio() {
+            isPlaying = false;
+            document.getElementById('playPauseIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+            document.getElementById('speakerStatus').innerText = "Paused";
+            document.getElementById('speakerPulse').classList.remove('animate-ping');
+            audio.pause();
+            if ('speechSynthesis' in window) window.speechSynthesis.pause();
+            clearInterval(ticker);
+        }
+
+        function toggleAudio() {
+            if (isPlaying) {
+                pauseAudio();
+            } else {
+                playAudio();
+            }
+        }
+
+        function updateLiveProgress() {
+            const current = audio.currentTime;
+            const pct = Math.min(100, (current / totalDuration) * 100);
+            document.getElementById('progressBar').style.width = `${pct}%`;
+
+            const m = String(Math.floor(current / 60)).padStart(2, '0');
+            const s = String(Math.floor(current % 60)).padStart(2, '0');
+            document.getElementById('currentTimeLabel').innerText = `${m}:${s}`;
+
+            let activeWordEl = null;
+
+            allWords.forEach((item) => {
+                const el = document.getElementById(`w-${item.id}`);
+                if (current >= item.start && current < item.end) {
+                    el.className = "word-token word-active";
+                    activeWordEl = el;
+                } else if (current >= item.end) {
+                    el.className = "word-token word-spoken";
+                } else {
+                    el.className = "word-token word-upcoming";
+                }
+            });
+
+            // Gentle auto-scroll to keep active word visible
+            if (activeWordEl) {
+                const container = document.getElementById('transcriptViewport');
+                const offsetTop = activeWordEl.offsetTop - container.offsetTop;
+                if (Math.abs(container.scrollTop - (offsetTop - 45)) > 30) {
+                    container.scrollTo({ top: offsetTop - 45, behavior: 'smooth' });
+                }
+            }
+        }
+
+        function seekAudio(event) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const targetPct = clickX / rect.width;
+            audio.currentTime = targetPct * totalDuration;
+            updateLiveProgress();
+            if (!isPlaying) {
+                playAudio();
+            }
+        }
+
+        function resetTranscript() {
+            allWords.forEach((item) => {
+                const el = document.getElementById(`w-${item.id}`);
+                el.className = "word-token word-upcoming";
+            });
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('currentTimeLabel').innerText = '00:00';
+            document.getElementById('transcriptViewport').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function fallbackSpeechSynthesis() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const fullText = timedPhrases.map(p => p.text).join(' ');
+                const utterance = new SpeechSynthesisUtterance(fullText);
+                utterance.rate = 0.94;
+                const voices = window.speechSynthesis.getVoices();
+                const ukVoice = voices.find(v => v.lang.includes('en-GB') || v.name.includes('British'));
+                if (ukVoice) utterance.voice = ukVoice;
+
+                utterance.onboundary = function(e) {
+                    if (e.name === 'word') {
+                        const approxIdx = Math.min(allWords.length - 1, Math.floor((e.charIndex / fullText.length) * allWords.length));
+                        allWords.forEach((w, idx) => {
+                            const el = document.getElementById(`w-${w.id}`);
+                            if (idx === approxIdx) el.className = "word-token word-active";
+                            else if (idx < approxIdx) el.className = "word-token word-spoken";
+                            else el.className = "word-token word-upcoming";
+                        });
+                    }
+                };
+
+                utterance.onend = () => {
+                    pauseAudio();
+                    resetTranscript();
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // 2-Second Delay on Slide Load
+        window.addEventListener('DOMContentLoaded', () => {
+            let countdown = 2;
+            const delayNotice = document.getElementById('delayNotice');
+
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    delayNotice.innerText = `Starting in ${countdown}s...`;
+                } else {
+                    clearInterval(countdownInterval);
+                    delayNotice.innerText = "Playing...";
+                    playAudio();
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
