@@ -36,30 +36,37 @@
         ::-webkit-scrollbar { display: none; }
         * { scrollbar-width: none; }
 
-        /* Dynamic word token styling for real-time speech tracking */
-        .word-token {
-            display: inline-block;
-            margin: 0 3px 4px 0;
-            padding: 1px 4px;
-            border-radius: 6px;
-            transition: all 0.16s ease-out;
+        /* Dynamic sentence block styling for real-time speech tracking */
+        .sentence-token {
+            display: block;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border-left: 3px solid transparent;
+            transition: all 0.22s ease-out;
+            line-height: 1.6;
         }
-        .word-active {
+        .sentence-active {
             background-color: #FE5000;
             color: #ffffff !important;
-            font-weight: 700;
-            transform: scale(1.05);
-            box-shadow: 0 3px 10px rgba(254, 80, 0, 0.35);
+            font-weight: 600;
+            border-left-color: #0C2340;
+            box-shadow: 0 3px 12px rgba(254, 80, 0, 0.28);
+            transform: translateX(2px);
         }
-        .word-spoken {
+        .sentence-spoken {
             color: #0C2340;
             opacity: 0.95;
             font-weight: 500;
+            border-left-color: #DBE2E9;
+            background-color: rgba(219, 226, 233, 0.2);
         }
-        .word-upcoming {
+        .sentence-upcoming {
             color: #94A3B8;
-            opacity: 0.65;
+            opacity: 0.6;
             font-weight: 400;
+            border-left-color: transparent;
+            background-color: transparent;
         }
     </style>
 </head>
@@ -114,7 +121,7 @@
             <!-- Spoken Words Telemetry Box (Synced Word-by-Word) -->
             <div id="transcriptViewport" class="p-4 bg-slate-50 border border-ice/80 rounded-xl overflow-y-auto max-h-[175px] sm:max-h-[200px] leading-relaxed text-sm sm:text-base scroll-smooth">
                 <div id="speechBox" class="leading-relaxed">
-                    <!-- Word tokens inserted via JavaScript -->
+                    <!-- Sentence tokens inserted via JavaScript -->
                 </div>
             </div>
 
@@ -148,46 +155,22 @@
     <script>
         // Timed sentence script matching Dr. Lindsay's Iceberg intro
         const timedPhrases = [
-            { start: 0.0, end: 5.5, text: "In medicine, if a patient presents with a spiked temperature, you don't take it as a personal insult." },
-            { start: 5.6, end: 11.2, text: "You recognize it as clinical data — an immune response to an underlying infection." },
-            { start: 11.3, end: 14.2, text: "Challenging patient behaviour is no different." },
-            { start: 14.3, end: 20.8, text: "The anger, the sharp dismissal, the sudden defensiveness on the phone — that is simply the ten percent sitting above the waterline." },
-            { start: 20.9, end: 25.8, text: "Your clinical leverage isn't in fighting the tip of the iceberg." },
-            { start: 25.9, end: 31.5, text: "It's in knowing what's driving it underneath." }
+            { id: 0, start: 0.0, end: 5.5, text: "In medicine, if a patient presents with a spiked temperature, you don't take it as a personal insult." },
+            { id: 1, start: 5.6, end: 11.2, text: "You recognize it as clinical data — an immune response to an underlying infection." },
+            { id: 2, start: 11.3, end: 14.2, text: "Challenging patient behaviour is no different." },
+            { id: 3, start: 14.3, end: 20.8, text: "The anger, the sharp dismissal, the sudden defensiveness on the phone — that is simply the ten percent sitting above the waterline." },
+            { id: 4, start: 20.9, end: 25.8, text: "Your clinical leverage isn't in fighting the tip of the iceberg." },
+            { id: 5, start: 25.9, end: 31.5, text: "It's in knowing what's driving it underneath." }
         ];
 
-        // Break phrases into word tokens
-        const allWords = [];
-        let globalWordIdx = 0;
-
-        timedPhrases.forEach((phrase) => {
-            const words = phrase.text.split(' ');
-            const totalChars = words.reduce((acc, w) => acc + Math.max(1, w.length), 0);
-            const phraseDuration = phrase.end - phrase.start;
-            let currentOffset = phrase.start;
-
-            words.forEach((w) => {
-                const wordWeight = Math.max(1, w.length) / totalChars;
-                const wordDuration = phraseDuration * wordWeight;
-                allWords.push({
-                    id: globalWordIdx,
-                    word: w,
-                    start: currentOffset,
-                    end: currentOffset + wordDuration
-                });
-                currentOffset += wordDuration;
-                globalWordIdx++;
-            });
-        });
-
-        // Render word tokens into the speech container
+        // Render sentence tokens into the speech container
         const speechBox = document.getElementById('speechBox');
-        allWords.forEach((item) => {
-            const span = document.createElement('span');
-            span.id = `w-${item.id}`;
-            span.className = "word-token word-upcoming";
-            span.innerText = item.word;
-            speechBox.appendChild(span);
+        timedPhrases.forEach((phrase) => {
+            const p = document.createElement('div');
+            p.id = `s-${phrase.id}`;
+            p.className = "sentence-token sentence-upcoming";
+            p.innerText = phrase.text;
+            speechBox.appendChild(p);
         });
 
         const audio = new Audio('./HD_S06_Lindsay_IcebergIntro.wav');
@@ -258,26 +241,26 @@
             const s = String(Math.floor(current % 60)).padStart(2, '0');
             document.getElementById('currentTimeLabel').innerText = `${m}:${s}`;
 
-            let activeWordEl = null;
+            let activeSentenceEl = null;
 
-            allWords.forEach((item) => {
-                const el = document.getElementById(`w-${item.id}`);
-                if (current >= item.start && current < item.end) {
-                    el.className = "word-token word-active";
-                    activeWordEl = el;
-                } else if (current >= item.end) {
-                    el.className = "word-token word-spoken";
+            timedPhrases.forEach((phrase) => {
+                const el = document.getElementById(`s-${phrase.id}`);
+                if (current >= phrase.start && current < phrase.end) {
+                    el.className = "sentence-token sentence-active";
+                    activeSentenceEl = el;
+                } else if (current >= phrase.end) {
+                    el.className = "sentence-token sentence-spoken";
                 } else {
-                    el.className = "word-token word-upcoming";
+                    el.className = "sentence-token sentence-upcoming";
                 }
             });
 
-            // Gentle auto-scroll to keep active word visible
-            if (activeWordEl) {
+            // Gentle auto-scroll to keep active sentence visible
+            if (activeSentenceEl) {
                 const container = document.getElementById('transcriptViewport');
-                const offsetTop = activeWordEl.offsetTop - container.offsetTop;
-                if (Math.abs(container.scrollTop - (offsetTop - 45)) > 30) {
-                    container.scrollTo({ top: offsetTop - 45, behavior: 'smooth' });
+                const offsetTop = activeSentenceEl.offsetTop - container.offsetTop;
+                if (Math.abs(container.scrollTop - (offsetTop - 20)) > 25) {
+                    container.scrollTo({ top: offsetTop - 20, behavior: 'smooth' });
                 }
             }
         }
@@ -294,9 +277,9 @@
         }
 
         function resetTranscript() {
-            allWords.forEach((item) => {
-                const el = document.getElementById(`w-${item.id}`);
-                el.className = "word-token word-upcoming";
+            timedPhrases.forEach((phrase) => {
+                const el = document.getElementById(`s-${phrase.id}`);
+                if (el) el.className = "sentence-token sentence-upcoming";
             });
             document.getElementById('progressBar').style.width = '0%';
             document.getElementById('currentTimeLabel').innerText = '00:00';
@@ -314,15 +297,18 @@
                 if (ukVoice) utterance.voice = ukVoice;
 
                 utterance.onboundary = function(e) {
-                    if (e.name === 'word') {
-                        const approxIdx = Math.min(allWords.length - 1, Math.floor((e.charIndex / fullText.length) * allWords.length));
-                        allWords.forEach((w, idx) => {
-                            const el = document.getElementById(`w-${w.id}`);
-                            if (idx === approxIdx) el.className = "word-token word-active";
-                            else if (idx < approxIdx) el.className = "word-token word-spoken";
-                            else el.className = "word-token word-upcoming";
-                        });
-                    }
+                    const charRatio = e.charIndex / Math.max(1, fullText.length);
+                    const approxTime = charRatio * totalDuration;
+                    timedPhrases.forEach((phrase) => {
+                        const el = document.getElementById(`s-${phrase.id}`);
+                        if (approxTime >= phrase.start && approxTime < phrase.end) {
+                            el.className = "sentence-token sentence-active";
+                        } else if (approxTime >= phrase.end) {
+                            el.className = "sentence-token sentence-spoken";
+                        } else {
+                            el.className = "sentence-token sentence-upcoming";
+                        }
+                    });
                 };
 
                 utterance.onend = () => {
